@@ -4,16 +4,58 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Генератор идей для постов</title>
+    <script>
+      (() => {
+        const storageKey = "theme";
+        const root = document.documentElement;
+        const saved = localStorage.getItem(storageKey);
+        const systemPrefersDark =
+          window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const initial = saved ?? (systemPrefersDark ? "dark" : "light");
+        root.dataset.theme = initial;
+      })();
+    </script>
     <style>
       :root {
-        color-scheme: light;
+        --ring: 0 0 0 6px rgba(99, 102, 241, 0.15);
+        --dot: linear-gradient(135deg, #6366f1, #10b981);
+      }
+
+      html[data-theme="dark"] {
+        color-scheme: dark;
         --bg: #0b1220;
-        --text: #111827;
-        --muted: #6b7280;
+        --page-text: rgba(255, 255, 255, 0.92);
+        --page-muted: rgba(255, 255, 255, 0.72);
         --card: rgba(255, 255, 255, 0.86);
         --border: rgba(255, 255, 255, 0.55);
         --shadow: 0 24px 55px rgba(2, 6, 23, 0.28);
-        --ring: 0 0 0 6px rgba(99, 102, 241, 0.15);
+        --li-bg: rgba(255, 255, 255, 0.55);
+        --li-border: rgba(15, 23, 42, 0.08);
+        --li-text: rgba(17, 24, 39, 0.92);
+        --li-hover-bg: rgba(255, 255, 255, 0.72);
+        --li-hover-border: rgba(99, 102, 241, 0.25);
+        --grad1: rgba(99, 102, 241, 0.35);
+        --grad2: rgba(16, 185, 129, 0.22);
+        --grad3: rgba(236, 72, 153, 0.16);
+      }
+
+      html[data-theme="light"] {
+        color-scheme: light;
+        --bg: #f6f7fb;
+        --page-text: rgba(15, 23, 42, 0.92);
+        --page-muted: rgba(71, 85, 105, 0.85);
+        --card: rgba(255, 255, 255, 0.92);
+        --border: rgba(2, 6, 23, 0.08);
+        --shadow: 0 18px 40px rgba(2, 6, 23, 0.12);
+        --li-bg: rgba(2, 6, 23, 0.03);
+        --li-border: rgba(2, 6, 23, 0.06);
+        --li-text: rgba(15, 23, 42, 0.92);
+        --li-hover-bg: rgba(2, 6, 23, 0.05);
+        --li-hover-border: rgba(99, 102, 241, 0.22);
+        --grad1: rgba(99, 102, 241, 0.22);
+        --grad2: rgba(16, 185, 129, 0.16);
+        --grad3: rgba(236, 72, 153, 0.12);
       }
 
       body {
@@ -22,21 +64,21 @@
           Arial, "Noto Sans", "Liberation Sans", sans-serif;
         background: radial-gradient(
             1200px 600px at 15% 10%,
-            rgba(99, 102, 241, 0.35),
+            var(--grad1),
             transparent 55%
           ),
           radial-gradient(
             900px 700px at 85% 20%,
-            rgba(16, 185, 129, 0.22),
+            var(--grad2),
             transparent 60%
           ),
           radial-gradient(
             900px 650px at 50% 95%,
-            rgba(236, 72, 153, 0.16),
+            var(--grad3),
             transparent 55%
           ),
           var(--bg);
-        color: rgba(255, 255, 255, 0.92);
+        color: var(--page-text);
         min-height: 100vh;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
@@ -48,6 +90,14 @@
         padding: 72px 20px;
       }
 
+      header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+
       h1 {
         font-size: clamp(28px, 3.2vw, 44px);
         line-height: 1.12;
@@ -57,8 +107,70 @@
 
       p {
         margin: 0 0 22px;
-        color: rgba(255, 255, 255, 0.72);
+        color: var(--page-muted);
         max-width: 58ch;
+      }
+
+      .theme-toggle {
+        appearance: none;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.2);
+        color: var(--page-text);
+        border-radius: 999px;
+        padding: 10px 12px;
+        font: inherit;
+        line-height: 1;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        user-select: none;
+        transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
+      }
+
+      html[data-theme="light"] .theme-toggle {
+        background: rgba(255, 255, 255, 0.7);
+      }
+
+      .theme-toggle:hover {
+        transform: translateY(-1px);
+        border-color: rgba(99, 102, 241, 0.35);
+      }
+
+      .theme-toggle .pill {
+        width: 34px;
+        height: 20px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.22);
+        position: relative;
+        flex: 0 0 auto;
+      }
+
+      html[data-theme="light"] .theme-toggle .pill {
+        background: rgba(2, 6, 23, 0.06);
+      }
+
+      .theme-toggle .knob {
+        width: 16px;
+        height: 16px;
+        border-radius: 999px;
+        background: var(--dot);
+        position: absolute;
+        top: 50%;
+        left: 2px;
+        transform: translateY(-50%);
+        transition: left 220ms ease;
+      }
+
+      html[data-theme="light"] .theme-toggle .knob {
+        left: 16px;
+      }
+
+      .theme-toggle .label {
+        font-weight: 600;
+        font-size: 14px;
+        letter-spacing: 0.01em;
       }
 
       .card {
@@ -76,8 +188,8 @@
 
       .card:hover {
         transform: translateY(4px);
-        border-color: rgba(255, 255, 255, 0.8);
-        box-shadow: 0 30px 70px rgba(2, 6, 23, 0.34);
+        border-color: rgba(99, 102, 241, 0.35);
+        box-shadow: 0 30px 70px rgba(2, 6, 23, 0.24);
       }
 
       ul {
@@ -89,9 +201,9 @@
       }
 
       li {
-        color: rgba(17, 24, 39, 0.92);
-        background: rgba(255, 255, 255, 0.55);
-        border: 1px solid rgba(15, 23, 42, 0.08);
+        color: var(--li-text);
+        background: var(--li-bg);
+        border: 1px solid var(--li-border);
         border-radius: 14px;
         padding: 12px 14px;
         line-height: 1.3;
@@ -106,15 +218,15 @@
         width: 10px;
         height: 10px;
         border-radius: 999px;
-        background: linear-gradient(135deg, #6366f1, #10b981);
+        background: var(--dot);
         box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
         flex: 0 0 auto;
       }
 
       li:hover {
         transform: translateY(-1px);
-        background: rgba(255, 255, 255, 0.72);
-        border-color: rgba(99, 102, 241, 0.25);
+        background: var(--li-hover-bg);
+        border-color: var(--li-hover-border);
       }
 
       :focus-visible {
@@ -145,8 +257,16 @@
   </head>
   <body>
     <main>
-      <h1>Генератор идей для постов</h1>
-      <p>Выберите формат — и начинайте писать.</p>
+      <header>
+        <div>
+          <h1>Генератор идей для постов</h1>
+          <p>Выберите формат — и начинайте писать.</p>
+        </div>
+        <button class="theme-toggle" type="button" id="themeToggle">
+          <span class="pill" aria-hidden="true"><span class="knob"></span></span>
+          <span class="label" id="themeLabel">Тема</span>
+        </button>
+      </header>
 
       <section class="card" aria-label="Список вариантов">
         <ul>
@@ -156,5 +276,28 @@
         </ul>
       </section>
     </main>
+    <script>
+      (() => {
+        const storageKey = "theme";
+        const root = document.documentElement;
+        const btn = document.getElementById("themeToggle");
+        const label = document.getElementById("themeLabel");
+
+        const setTheme = (theme) => {
+          root.dataset.theme = theme;
+          localStorage.setItem(storageKey, theme);
+          label.textContent = theme === "light" ? "Светлая" : "Тёмная";
+          btn.setAttribute("aria-label", `Переключить тему (сейчас: ${label.textContent})`);
+        };
+
+        const toggle = () => {
+          const current = root.dataset.theme === "light" ? "light" : "dark";
+          setTheme(current === "light" ? "dark" : "light");
+        };
+
+        btn.addEventListener("click", toggle);
+        setTheme(root.dataset.theme === "light" ? "light" : "dark");
+      })();
+    </script>
   </body>
 </html>
